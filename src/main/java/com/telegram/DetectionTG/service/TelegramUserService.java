@@ -12,6 +12,7 @@ public interface TelegramUserService {
     void save(TelegramUser telegramUser);
     List<TelegramUser> findAll();
     Optional<TelegramUser> findById(long id);
-    TelegramUser findByUniqueString(String uniqueString);
-    void sendToUserNotification(String uniqueString,String image) throws TelegramApiException, IOException;
+    void sendImage(String uniqueString,String image) throws TelegramApiException, IOException;
+    void sendVideo(String uniqueString,String video) throws TelegramApiException, IOException;
+
 }

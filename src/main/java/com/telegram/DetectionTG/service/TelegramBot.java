@@ -5,6 +5,7 @@ import com.google.common.io.ByteSource;
 import com.telegram.DetectionTG.config.BotConfig;
 import com.telegram.DetectionTG.model.TelegramUser;
 import com.telegram.DetectionTG.model.User;
+import com.telegram.DetectionTG.repository.TelegramUserRepository;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,22 +14,19 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -42,6 +40,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     private TelegramUserService telegramUserService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private TelegramUserRepository telegramUserRepository;
     final BotConfig config;
 
     static final String HELP_TEXT = "This bot is created to demonstrate Spring capabilities.\n\n" +
@@ -84,9 +84,10 @@ public class TelegramBot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
 
         if (update.hasMessage() && update.getMessage().hasText()) {
-            String messageText = update.getMessage().getText();
 
+            String messageText = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
+
             System.out.println(messageText + "   " + chatId);
             if (messageText.contains("/send") && config.getOwnerId() == chatId) {
                 var textToSend = EmojiParser.parseToUnicode(messageText.substring(messageText.indexOf(" ")));
@@ -96,27 +97,30 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             } else {
                 if (messageText.length() > 3 && messageText.substring(0, 3).equals("tg-")) {
-                    boolean keyIncludeDB = userService.includeUniqueString(messageText);
-                    User user = userService.findByTelegramUniqueKey(messageText);
+                    boolean keyIncludeDB = userService.includeTelegramToken(messageText);
+
+                    User user = userService.findByTelegramToken(messageText);
                     if (keyIncludeDB) {
-                        TelegramUser telegramUserOtherDevice = telegramUserService.findByUniqueString(messageText);
-                        if (telegramUserOtherDevice.getChatId() != null) {
-                            telegramUserOtherDevice.setUniqueString(null);
-                            telegramUserService.save(telegramUserOtherDevice);
-                            TelegramUser telegramUser = telegramUserService.findById(chatId).get();
-                            telegramUser.setUniqueString(messageText);
-                            telegramUserService.save(telegramUser);
+                        TelegramUser telegramOldDevice = telegramUserRepository.findByUserId(user.getId());
+                        if (telegramOldDevice != null) {
+                            telegramOldDevice.setUser(null);
+                            telegramUserRepository.save(telegramOldDevice);
+                            TelegramUser telegramNewDevice = telegramUserRepository.findById(chatId).get();
+                            telegramNewDevice.setUser(user);
+                            telegramUserRepository.save(telegramNewDevice);
+
                             String messageToUser = "Salam, " + user.getFirstName() + " " + user.getLastName() + "! Səni başqa bir cihaz \uD83D\uDCF2 ilə tanımışdım.Yəqin ki bu yeni cihazdır.\n\nYaxşı məlumatları artıq bu cihaza göndərəcəm.";
                             prepareAndSendMessage(chatId, messageToUser);
                         } else {
-                            TelegramUser telegramUser = telegramUserService.findById(chatId).get();
-                            telegramUser.setUniqueString(messageText);
-                            telegramUserService.save(telegramUser);
+                            TelegramUser telegramUser = telegramUserRepository.findById(chatId).get();
+                            telegramUser.setUser(user);
+                            telegramUserRepository.save(telegramUser);
+
                             String messageToUser = EmojiParser.parseToUnicode("Salam dəyərli istifadəçi " + user.getFirstName() + " " + user.getLastName() + ",Telegrama xoş gəlmisiz!" + " :blush:");
                             prepareAndSendMessage(chatId, messageToUser);
                         }
                     } else {
-                        prepareAndSendMessage(chatId, "Belə bir unikal kodda Detection server hesabı mövcud deyil.");
+                        prepareAndSendMessage(chatId, "Belə bir token mövcud deyil.");
 
                     }
                 } else {
@@ -146,8 +150,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 executeEditMessageText(text, chatId, messageId);
             }
         }
-
-
     }
 
 
@@ -173,10 +175,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void startCommandReceived(long chatId, String name) {
 
-
         String answer = EmojiParser.parseToUnicode("Salam, " + name + ", platformaya xoş gəlmisiz!" + " :blush:");
         log.info("Replied to user " + name);
-
 
         sendMessage(chatId, answer);
     }
@@ -241,31 +241,44 @@ public class TelegramBot extends TelegramLongPollingBot {
         executeMessage(message);
     }
 
-    public void sendToUser(String uniqueString, String textToSend) throws TelegramApiException, IOException {
+    public void sendImageToUser(String token, String textToSend) throws TelegramApiException, IOException {
 
-        SendMessage message = new SendMessage();
-        TelegramUser telegramUser = telegramUserService.findByUniqueString(uniqueString);
-        message.setChatId(String.valueOf(telegramUser.getChatId()));
-        message.setText(textToSend);
-        executeMessage(message);
-
-        InputFile inputFile=new InputFile();
+        User user = userService.findByTelegramToken(token);
+        TelegramUser telegramUser = telegramUserRepository.findByUserId(user.getId());
+        InputFile inputFile = new InputFile();
         byte[] bytes = Base64.getDecoder().decode(textToSend);
         InputStream inputStream = ByteSource.wrap(bytes).openStream();
-
-        //for testing
         inputStream.close();
-        inputFile.setMedia(inputStream,"XXX");
-        sendPhoto(String.valueOf(telegramUser.getChatId()),inputFile);
+        inputFile.setMedia(inputStream, "person");
+        sendPhoto(String.valueOf(telegramUser.getChatId()), inputFile);
     }
 
     void sendPhoto(String chatId, InputFile photo) throws TelegramApiException {
         var message = new SendPhoto();
         message.setChatId(chatId);
-        message.setCaption("Caption");
+        message.setCaption("Person");
         message.setPhoto(photo);
 
         execute(message);
     }
 
+    public void sendVideoToUser(String token, String textToSend) throws TelegramApiException, IOException {
+        User user = userService.findByTelegramToken(token);
+        TelegramUser telegramUser = telegramUserRepository.findByUserId(user.getId());
+        InputFile inputFile = new InputFile();
+        byte[] bytes = Base64.getDecoder().decode(textToSend);
+        InputStream inputStream = ByteSource.wrap(bytes).openStream();
+        inputStream.close();
+        inputFile.setMedia(inputStream, "person");
+        sendVideo(String.valueOf(telegramUser.getChatId()), inputFile);
+
+    }
+
+    void sendVideo(String chatId, InputFile video) throws TelegramApiException {
+        var message = new SendVideo();
+        message.setChatId(chatId);
+        message.setCaption("video");
+        message.setVideo(video);
+        execute(message);
+    }
 }

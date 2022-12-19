@@ -1,13 +1,22 @@
 package com.telegram.DetectionTG.model;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
+import javax.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@ToString
 public class TelegramUser {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long chatId;
 
     private String firstName;
@@ -18,64 +27,12 @@ public class TelegramUser {
 
     private Timestamp registeredAt;
 
-    private String uniqueString;
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
-    public Long getChatId() {
-        return chatId;
-    }
 
-    public void setChatId(Long chatId) {
-        this.chatId = chatId;
-    }
 
-    public String getFirstName() {
-        return firstName;
-    }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
 
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public Timestamp getRegisteredAt() {
-        return registeredAt;
-    }
-
-    public void setRegisteredAt(Timestamp registeredAt) {
-        this.registeredAt = registeredAt;
-    }
-
-    public String getUniqueString() {
-        return uniqueString;
-    }
-
-    public void setUniqueString(String uniqueString) {
-        this.uniqueString = uniqueString;
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "chatId=" + chatId +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", userName='" + userName + '\'' +
-                ", registeredAt=" + registeredAt +
-                '}';
-    }
 }

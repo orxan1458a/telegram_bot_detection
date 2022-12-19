@@ -5,5 +5,6 @@ import com.telegram.DetectionTG.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository  extends JpaRepository<User,Long> {
-    User findByTelegramUniqueKey(String findByTelegramUniqueKey);
+    User findByUserName(String userName);
+    User findByTelegramToken(String token);
 }

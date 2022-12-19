@@ -14,34 +14,33 @@ public class UserServiceImp implements UserService {
     UserRepository userRepository;
 
     @Override
-    public User findByTelegramUniqueKey(String telegramUniqueKey) {
-        return userRepository.findByTelegramUniqueKey(telegramUniqueKey);
-    }
+    public boolean includeTelegramToken(String token) {
+        List<User> usersDB = userRepository.findAll();
+        boolean include = false;
+        for (int i = 0; i < usersDB.size(); i++) {
+            if (usersDB.get(i).getTelegramToken().equals(token)) {
+                include = true;
 
-    @Override
-    public boolean checkStringUnique(String key) {
-        List<User> usersDB=userRepository.findAll();
-        boolean isUnique=true;
-        for(int i=0;i<usersDB.size();i++){
-            if (usersDB.get(i).getTelegramUniqueKey()==key){
-                isUnique=false;
-                break;
-            }
-        }
-        return isUnique;
-    }
-
-    @Override
-    public boolean includeUniqueString(String key) {
-
-        List<User> usersDB=userRepository.findAll();
-        boolean include=false;
-        for(int i=0;i<usersDB.size();i++){
-            if (usersDB.get(i).getTelegramUniqueKey().equals(key)){
-                include=true;
                 break;
             }
         }
         return include;
     }
+
+    @Override
+    public User findByTelegramToken(String token) {
+        return userRepository.findByTelegramToken(token);
+    }
+
+    @Override
+    public boolean checkTokenUnique(String key) {
+        List<User> usersDB = userRepository.findAll();
+        boolean isUnique = true;
+        for (int i = 0; i < usersDB.size(); i++) {
+            if (usersDB.get(i).getTelegramToken().equals(key)) {
+                isUnique = false;
+                break;
+            }
+        }
+        return isUnique;    }
 }

@@ -37,26 +37,16 @@ public class TelegramUserServiceImp implements TelegramUserService {
         return telegramUserRepository.findById(id);
     }
 
+
+
     @Override
-    public TelegramUser findByUniqueString(String uniqueString) {
-        TelegramUser telegramUser = new TelegramUser();
-        Iterable<TelegramUser> tgUserDB = telegramUserRepository.findAll();
-        List<TelegramUser> list = new ArrayList<>();
-        for (TelegramUser tgUser : tgUserDB) {
-            list.add(tgUser);
-        }
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).getUniqueString() != null && list.get(i).getUniqueString().equals(uniqueString)) {
-                telegramUser = list.get(i);
-                break;
-            }
-        }
-        return telegramUser;
+    public void sendImage(String uniqueString, String image) throws TelegramApiException, IOException {
+        telegramBot.sendImageToUser(uniqueString,   image );
     }
 
     @Override
-    public void sendToUserNotification(String uniqueString, String image) throws TelegramApiException, IOException {
-        telegramBot.sendToUser(uniqueString,   image );
+    public void sendVideo(String telegramToken, String video) throws TelegramApiException, IOException {
+        telegramBot.sendVideoToUser(telegramToken,video);
     }
 
 }

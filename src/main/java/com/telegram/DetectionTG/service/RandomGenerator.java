@@ -20,7 +20,7 @@ public class RandomGenerator {
                 int rnum = (int) Math.floor(Math.random() * characters.length());
                 randomstring += characters.substring(rnum, rnum + 1);
             }
-            isUnique = userService.checkStringUnique(randomstring);
+            isUnique = userService.checkTokenUnique(randomstring);
         }
         return randomstring;
 

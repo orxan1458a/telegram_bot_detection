@@ -4,4 +4,6 @@ import com.telegram.DetectionTG.model.TelegramUser;
 import org.springframework.data.repository.CrudRepository;
 
 public interface TelegramUserRepository extends CrudRepository<TelegramUser, Long> {
+    TelegramUser findByUserId(long userId);
+    TelegramUser findByChatId(long chatId);
 }
