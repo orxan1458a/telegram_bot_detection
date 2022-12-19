@@ -27,6 +27,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -112,7 +113,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                             String messageToUser = "Salam, " + user.getFirstName() + " " + user.getLastName() + "! Səni başqa bir cihaz \uD83D\uDCF2 ilə tanımışdım.Yəqin ki bu yeni cihazdır.\n\nYaxşı məlumatları artıq bu cihaza göndərəcəm.";
                             prepareAndSendMessage(chatId, messageToUser);
                         } else {
-                            TelegramUser telegramUser = telegramUserRepository.findById(chatId).get();
+                            TelegramUser telegramUser = telegramUserRepository.findByChatId(chatId);
                             telegramUser.setUser(user);
                             telegramUserRepository.save(telegramUser);
 

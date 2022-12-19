@@ -17,6 +17,8 @@ public class TelegramUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    private long id;
+
     private Long chatId;
 
     private String firstName;

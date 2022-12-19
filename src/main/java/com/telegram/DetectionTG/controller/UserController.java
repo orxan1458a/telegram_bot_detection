@@ -19,15 +19,15 @@ public class UserController {
     public void createUser(){
 
         System.out.println("project runing..");
-//        User user=new User();
-//        user.setUserName("admin");
-//        user.setPassword("admin");
-//        user.setFirstName("Orxan");
-//        user.setLastName("Mansurov");
-//        String telegramKey=randomGenerator.randomString();
-//        user.setTelegramToken(telegramKey);
-//        userRepository.save(user);
-//        System.out.println("new user created");
+        User user=new User();
+        user.setUserName("admin");
+        user.setPassword("admin");
+        user.setFirstName("Orxan");
+        user.setLastName("Mansurov");
+        String telegramKey=randomGenerator.randomString();
+        user.setTelegramToken(telegramKey);
+        userRepository.save(user);
+        System.out.println("new user created");
 
     }
 }

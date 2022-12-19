@@ -21,14 +21,14 @@ public class TelegramController {
 
     @PostMapping("/sendImage")
     public String sendImage(@RequestBody String image) throws IOException, TelegramApiException {
-        telegramUserService.sendImage("tg-gekeDUd",image);
+        telegramUserService.sendImage("tg-WCuUKmu",image);
         System.out.println("send to user image");
         return "photo sent";
     }
 
     @PostMapping("/sendVideo")
     public String sendVideo(@RequestBody String video) throws IOException, TelegramApiException {
-        telegramUserService.sendVideo("tg-gekeDUd",video);
+        telegramUserService.sendVideo("tg-WCuUKmu",video);
         System.out.println("send to user video");
         return "video sent";
     }
